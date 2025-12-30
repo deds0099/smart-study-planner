@@ -41,7 +41,6 @@ const Index = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [hasGeneratedSchedule, setHasGeneratedSchedule] = useState(false);
   const { toast } = useToast();
 
   // Apply dark mode
@@ -200,7 +199,6 @@ const Index = () => {
     ).slice(0, settings.blocksPerDay);
 
     await replaceBlocks(todayBlocks.length > 0 ? todayBlocks : newBlocks.slice(0, settings.blocksPerDay));
-    setHasGeneratedSchedule(true);
     setIsAddTopicsOpen(false);
 
     toast({
@@ -262,7 +260,10 @@ const Index = () => {
   };
 
   const hoursStudied = Math.round((completedBlocks * settings.blockDuration) / 60 * 10) / 10;
-  const showEmptyState = totalTopics === 0 || !hasGeneratedSchedule;
+  // Se temos tópicos cadastrados e blocos gerados, mostramos o dashboard
+  // Se não temos tópicos, mostramos empty state para cadastrar
+  // Se temos tópicos mas não temos blocos, mostramos empty state (ou modal de gerar)
+  const showEmptyState = totalTopics === 0 || blocks.length === 0;
 
   if (loading) {
     return (
