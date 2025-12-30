@@ -28,6 +28,7 @@ const Index = () => {
     updateSubject,
     removeSubject,
     updateBlock,
+    removeBlock,
     replaceBlocks,
     updateAlert,
     updateSettings,
@@ -85,12 +86,24 @@ const Index = () => {
     const subject = subjects.find((s) => s.id === subjectId);
     if (!subject) return;
 
+    // Remover blocos do tópico
+    const blocksToRemove = blocks.filter(b => b.topicId === topicId);
+    for (const block of blocksToRemove) {
+      await removeBlock(block.id);
+    }
+
     await updateSubject(subjectId, {
       topics: subject.topics.filter((t) => t.id !== topicId),
     });
   };
 
   const handleRemoveSubject = async (subjectId: string) => {
+    // Remover blocos da matéria
+    const blocksToRemove = blocks.filter(b => b.subjectId === subjectId);
+    for (const block of blocksToRemove) {
+      await removeBlock(block.id);
+    }
+
     await removeSubject(subjectId);
   };
 
@@ -250,7 +263,14 @@ const Index = () => {
   // Se temos tópicos cadastrados e blocos gerados, mostramos o dashboard
   // Se não temos tópicos, mostramos empty state para cadastrar
   // Se temos tópicos mas não temos blocos, mostramos empty state (ou modal de gerar)
-  const showEmptyState = totalTopics === 0 || blocks.length === 0;
+  // Filtrar blocos órfãos (segurança extra)
+  const validBlocks = blocks.filter(block => {
+    const subject = subjects.find(s => s.id === block.subjectId);
+    const topic = subject?.topics.find(t => t.id === block.topicId);
+    return subject && topic;
+  });
+
+  const showEmptyState = totalTopics === 0 || validBlocks.length === 0;
 
   if (loading) {
     return (
@@ -280,13 +300,13 @@ const Index = () => {
           <>
             <StatsOverview
               blocksCompleted={completedBlocks}
-              totalBlocks={blocks.length}
+              totalBlocks={validBlocks.length}
               hoursToday={hoursStudied}
               streak={1}
             />
 
             <TodaySchedule
-              blocks={blocks}
+              blocks={validBlocks}
               subjects={subjects}
               onComplete={handleCompleteBlock}
               onSkip={handleSkipBlock}
@@ -294,7 +314,7 @@ const Index = () => {
             />
 
             <WeeklyView
-              blocks={blocks}
+              blocks={validBlocks}
               subjects={subjects}
               studyDays={studyDays}
               onComplete={handleCompleteBlock}
@@ -337,14 +357,14 @@ const Index = () => {
         isOpen={!!selectedSubject}
         onClose={() => setSelectedSubject(null)}
         subject={selectedSubject}
-        blocks={blocks}
+        blocks={validBlocks}
         onMarkTopicComplete={handleMarkTopicComplete}
       />
 
       <CalendarModal
         isOpen={isCalendarOpen}
         onClose={() => setIsCalendarOpen(false)}
-        blocks={blocks}
+        blocks={validBlocks}
         subjects={subjects}
         studyDays={studyDays}
       />

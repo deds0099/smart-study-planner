@@ -125,6 +125,9 @@ export function DayScheduleModal({
                             dayBlocks.map((block, index) => {
                                 const subject = subjects.find((s) => s.id === block.subjectId);
                                 const topic = subject?.topics.find((t) => t.id === block.topicId);
+
+                                if (!subject || !topic) return null;
+
                                 const isCompleted = block.status === 'completed';
                                 const isSkipped = block.status === 'skipped';
 

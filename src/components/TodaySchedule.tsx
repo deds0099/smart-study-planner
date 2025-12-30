@@ -12,9 +12,11 @@ interface TodayScheduleProps {
 }
 
 export function TodaySchedule({ blocks, subjects, onComplete, onSkip, onFailedToday }: TodayScheduleProps) {
-  const getSubject = (id: string) => subjects.find((s) => s.id === id)!;
-  const getTopic = (subjectId: string, topicId: string) =>
-    getSubject(subjectId).topics.find((t) => t.id === topicId)!;
+  const getSubject = (id: string) => subjects.find((s) => s.id === id);
+  const getTopic = (subjectId: string, topicId: string) => {
+    const s = getSubject(subjectId);
+    return s?.topics.find((t) => t.id === topicId);
+  };
 
   const pendingBlocks = blocks.filter((b) => b.status === 'pending');
   const completedBlocks = blocks.filter((b) => b.status === 'completed');
@@ -43,6 +45,9 @@ export function TodaySchedule({ blocks, subjects, onComplete, onSkip, onFailedTo
         {blocks.map((block, index) => {
           const subject = getSubject(block.subjectId);
           const topic = getTopic(block.subjectId, block.topicId);
+
+          if (!subject || !topic) return null;
+
           return (
             <StudyBlockCard
               key={block.id}
