@@ -6,9 +6,11 @@ interface HeaderProps {
   alertCount: number;
   onAlertsClick: () => void;
   onAddTopicsClick: () => void;
+  onCalendarClick: () => void;
+  onSettingsClick: () => void;
 }
 
-export function Header({ alertCount, onAlertsClick, onAddTopicsClick }: HeaderProps) {
+export function Header({ alertCount, onAlertsClick, onAddTopicsClick, onCalendarClick, onSettingsClick }: HeaderProps) {
   const today = new Date();
   const formattedDate = today.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -56,10 +58,10 @@ export function Header({ alertCount, onAlertsClick, onAddTopicsClick }: HeaderPr
                 </Badge>
               )}
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onCalendarClick}>
               <Calendar className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onSettingsClick}>
               <Settings className="h-5 w-5" />
             </Button>
           </div>
