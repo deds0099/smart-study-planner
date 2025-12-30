@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { SubjectDetailModal } from '@/components/SubjectDetailModal';
 import { CalendarModal } from '@/components/CalendarModal';
 import { SettingsModal } from '@/components/SettingsModal';
-import { StudyBlock, Subject, Topic, Difficulty } from '@/types/study';
+import { StudyBlock, Subject, Topic, Difficulty, StudyType } from '@/types/study';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/hooks/useFirestore';
 
@@ -114,82 +114,75 @@ const Index = () => {
     const today = new Date();
     const newBlocks: StudyBlock[] = [];
 
-    // Ordenar por peso (matérias mais importantes primeiro)
+    // Ordenar matérias por peso (opcional, mas bom manter a prioridade inicial)
     const sortedSubjects = [...subjects].sort((a, b) => b.weight - a.weight);
+    if (sortedSubjects.length === 0) return;
 
-    // Selecionar apenas o número de matérias configurado por dia
-    const subjectsPerDay = settings.subjectsPerDay || subjects.length;
-    const selectedSubjects = sortedSubjects.slice(0, subjectsPerDay);
+    const subjectsPerDay = settings.subjectsPerDay || 2;
+    const blocksPerDay = settings.blocksPerDay || 4;
 
-    // Se temos menos matérias do que o limite, usamos todas disponíveis
-    const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : sortedSubjects;
-
-    // Gerar blocos usando Round Robin entre as matérias selecionadas
-    // mas ainda respeitando a ordem de tópicos de cada matéria
-
-    // Mapa para controlar o índice do tópico atual de cada matéria
+    // Mapa para controlar o tópico atual de cada matéria
     const subjectTopicIndices: Record<string, number> = {};
-    subjectsToUse.forEach(s => subjectTopicIndices[s.id] = 0);
+    sortedSubjects.forEach(s => subjectTopicIndices[s.id] = 0);
 
-    // Calcular quantos blocos precisamos gerar no total (um pouco mais para garantir)
-    const weeksToGenerate = 4; // Gerar 4 semanas de conteúdo
-    const totalBlocksNeeded = settings.blocksPerDay * 7 * weeksToGenerate;
+    const totalWeeks = 4;
+    const totalDays = totalWeeks * 7;
+    let totalBlockCounter = 0;
 
-    for (let i = 0; i < totalBlocksNeeded; i++) {
-      const subjectIndex = i % subjectsToUse.length;
-      const subject = subjectsToUse[subjectIndex];
-
-      // Pega o próximo tópico desta matéria
-      const topicIndex = subjectTopicIndices[subject.id];
-
-      // Se já usamos todos os tópicos desta matéria, voltamos ao início (revisão) ou paramos
-      // Aqui vamos simplificar e parar de gerar blocos para esta matéria se acabarem os tópicos
-      if (topicIndex >= subject.topics.length) {
-        continue;
-        // Nota: Em uma implementação mais avançada, poderíamos reiniciar para revisão
-      }
-
-      const topic = subject.topics[topicIndex];
-      subjectTopicIndices[subject.id]++; // Avança para o próximo tópico desta matéria
-
-      // Calcular o dia baseado nos dias de estudo disponíveis
-      const dayOffset = Math.floor(i / settings.blocksPerDay);
-      let actualDayOffset = 0;
-      let studyDaysCount = 0;
-
-      while (studyDaysCount <= dayOffset) {
-        const dayOfWeek = (today.getDay() + actualDayOffset) % 7;
-        if (studyDays.includes(dayOfWeek)) {
-          studyDaysCount++;
-        }
-        if (studyDaysCount <= dayOffset) {
-          actualDayOffset++;
-        }
-      }
-
+    // Iterar dia por dia para controle fino da rotação de matérias
+    for (let dayOffset = 0; dayOffset < totalDays; dayOffset++) {
       const scheduledDate = new Date(today);
-      scheduledDate.setDate(today.getDate() + actualDayOffset);
+      scheduledDate.setDate(today.getDate() + dayOffset);
+      const dayOfWeek = scheduledDate.getDay();
 
-      // Determinar tipo de estudo
-      const studyTypes: Array<'theory' | 'questions' | 'revision'> = ['theory', 'questions'];
-      const type = studyTypes[i % 2];
+      // Pular se não for dia de estudo
+      if (!studyDays.includes(dayOfWeek)) continue;
 
-      // Duração baseada na dificuldade
-      const durationMap: Record<Difficulty, number> = {
-        easy: Math.max(30, settings.blockDuration - 10),
-        medium: settings.blockDuration,
-        hard: settings.blockDuration + 10,
-      };
+      // Selecionar as matérias para ESTE dia
+      // Usamos um índice de rotação baseado no número de dias de estudo decorridos
+      const studyDayIndex = Math.floor(totalBlockCounter / blocksPerDay);
+      const subjectRotationStart = (studyDayIndex * subjectsPerDay) % sortedSubjects.length;
 
-      newBlocks.push({
-        id: `block_${Date.now()}_${i}_${topic.id}`,
-        subjectId: subject.id,
-        topicId: topic.id,
-        duration: durationMap[topic.difficulty],
-        type,
-        status: 'pending',
-        scheduledFor: scheduledDate,
-      });
+      const daySubjects: Subject[] = [];
+      for (let i = 0; i < subjectsPerDay; i++) {
+        const idx = (subjectRotationStart + i) % sortedSubjects.length;
+        daySubjects.push(sortedSubjects[idx]);
+      }
+
+      // Preencher os blocos do dia
+      for (let b = 0; b < blocksPerDay; b++) {
+        const subject = daySubjects[b % daySubjects.length];
+
+        // Pega o próximo tópico desta matéria na ordem cadastrada
+        const topicIndex = subjectTopicIndices[subject.id];
+
+        // Se todos os tópicos da matéria acabaram, podemos pular ou reiniciar (revisão)
+        // Por enquanto, vamos parar de adicionar blocos desta matéria
+        if (topicIndex >= subject.topics.length) continue;
+
+        const topic = subject.topics[topicIndex];
+
+        // Calcular tipo e duração (baseado na lógica anterior)
+        const type: StudyType = totalBlockCounter % 2 === 0 ? 'theory' : 'questions';
+        const durationMap: Record<Difficulty, number> = {
+          easy: Math.max(30, settings.blockDuration - 10),
+          medium: settings.blockDuration,
+          hard: settings.blockDuration + 10,
+        };
+
+        newBlocks.push({
+          id: `block_${Date.now()}_${totalBlockCounter}`,
+          subjectId: subject.id,
+          topicId: topic.id,
+          duration: durationMap[topic.difficulty],
+          type,
+          status: 'pending',
+          scheduledFor: scheduledDate,
+        });
+
+        subjectTopicIndices[subject.id]++;
+        totalBlockCounter++;
+      }
     }
 
     await replaceBlocks(newBlocks);
@@ -197,7 +190,7 @@ const Index = () => {
 
     toast({
       title: '🎯 Cronograma gerado!',
-      description: `${newBlocks.length} blocos de estudo criados para as próximas semanas.`,
+      description: `${newBlocks.length} blocos de estudo distribuídos nas próximas semanas.`,
     });
   };
 
@@ -361,6 +354,7 @@ const Index = () => {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onSettingsChange={updateSettings}
+        onRegenerate={generateSchedule}
       />
     </div>
   );

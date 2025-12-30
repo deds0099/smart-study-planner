@@ -22,9 +22,10 @@ interface SettingsModalProps {
     darkMode: boolean;
     subjectsPerDay?: number;
   }) => void;
+  onRegenerate?: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, settings, onSettingsChange, onRegenerate }: SettingsModalProps) {
   if (!isOpen) return null;
 
   const updateSetting = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) => {
@@ -189,9 +190,18 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-2">
+            <Button
+              className="w-full gradient-primary"
+              onClick={() => {
+                if (onRegenerate) onRegenerate();
+                onClose();
+              }}
+            >
+              Salvar e Regerar Cronograma
+            </Button>
             <Button className="w-full" variant="outline" onClick={onClose}>
-              Fechar
+              Fechar sem alterar cronograma
             </Button>
           </div>
         </Card>
