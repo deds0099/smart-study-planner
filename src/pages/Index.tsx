@@ -192,18 +192,12 @@ const Index = () => {
       });
     }
 
-    // Pegar apenas os blocos para hoje
-    const todayStr = today.toDateString();
-    const todayBlocks = newBlocks.filter(
-      (b) => new Date(b.scheduledFor).toDateString() === todayStr
-    ).slice(0, settings.blocksPerDay);
-
-    await replaceBlocks(todayBlocks.length > 0 ? todayBlocks : newBlocks.slice(0, settings.blocksPerDay));
+    await replaceBlocks(newBlocks);
     setIsAddTopicsOpen(false);
 
     toast({
       title: '🎯 Cronograma gerado!',
-      description: `${Math.min(settings.blocksPerDay, newBlocks.length)} blocos de estudo criados para hoje.`,
+      description: `${newBlocks.length} blocos de estudo criados para as próximas semanas.`,
     });
   };
 

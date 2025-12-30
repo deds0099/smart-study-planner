@@ -13,16 +13,9 @@ import {
     getDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Subject, StudyBlock, Alert } from '@/types/study';
+import { Subject, StudyBlock, Alert, Settings } from '@/types/study';
 
 const USER_ID = 'default_user'; // Por enquanto, um único usuário. Pode ser expandido para autenticação
-
-interface Settings {
-    blocksPerDay: number;
-    blockDuration: number;
-    notificationsEnabled: boolean;
-    darkMode: boolean;
-}
 
 export function useFirestore() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -113,6 +106,7 @@ export function useFirestore() {
                     blockDuration: data.blockDuration || 45,
                     notificationsEnabled: data.notificationsEnabled ?? true,
                     darkMode: data.darkMode ?? false,
+                    subjectsPerDay: data.subjectsPerDay || 2,
                 });
                 setStudyDays(data.studyDays || [1, 2, 3, 4, 5]);
             }
