@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import { X, Check, ChevronLeft, BookOpen, HelpCircle, RotateCcw, Calendar, Clock, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+=======
+import { X, Check, ChevronLeft, BookOpen, HelpCircle, RotateCcw } from 'lucide-react';
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -21,20 +25,26 @@ export function SubjectDetailModal({
   blocks,
   onMarkTopicComplete,
 }: SubjectDetailModalProps) {
+<<<<<<< HEAD
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
+=======
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
   if (!isOpen || !subject) return null;
 
   const completedTopics = subject.topics.filter((t) => t.completed);
   const pendingTopics = subject.topics.filter((t) => !t.completed);
   const percentage = Math.round((completedTopics.length / subject.topics.length) * 100) || 0;
 
+<<<<<<< HEAD
   // Filtrar blocos desta matéria
   const subjectBlocks = blocks.filter((b) => b.subjectId === subject.id);
   const completedBlocks = subjectBlocks.filter((b) => b.status === 'completed');
   const pendingBlocks = subjectBlocks.filter((b) => b.status === 'pending');
   const totalHours = Math.round((completedBlocks.reduce((acc, b) => acc + b.duration, 0) / 60) * 10) / 10;
 
+=======
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
   const getTopicBlocks = (topicId: string) => {
     return blocks.filter((b) => b.topicId === topicId);
   };
@@ -52,17 +62,24 @@ export function SubjectDetailModal({
     }
   };
 
+<<<<<<< HEAD
   const filteredTopics = filter === 'all'
     ? subject.topics
     : filter === 'pending'
       ? pendingTopics
       : completedTopics;
 
+=======
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
   return (
     <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm animate-fade-in overflow-y-auto" onClick={onClose}>
       <div className="min-h-screen py-8 px-4 flex items-start justify-center">
         <Card
+<<<<<<< HEAD
           className="w-full max-w-3xl bg-card animate-slide-up"
+=======
+          className="w-full max-w-2xl bg-card animate-slide-up"
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -96,6 +113,7 @@ export function SubjectDetailModal({
               </div>
               <Progress value={percentage} className="h-3" />
             </div>
+<<<<<<< HEAD
 
             {/* Estatísticas */}
             <div className="grid grid-cols-3 gap-3 mt-4">
@@ -216,6 +234,53 @@ export function SubjectDetailModal({
                       </div>
 
                       {!isCompleted && (
+=======
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            {/* Pending Topics */}
+            {pendingTopics.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-warning" />
+                  Tópicos Pendentes ({pendingTopics.length})
+                </h3>
+                <div className="space-y-2">
+                  {pendingTopics.map((topic) => {
+                    const topicBlocks = getTopicBlocks(topic.id);
+                    return (
+                      <div
+                        key={topic.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">{topic.name}</span>
+                            <DifficultyBadge difficulty={topic.difficulty} />
+                          </div>
+                          {topicBlocks.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              {topicBlocks.map((block) => (
+                                <span
+                                  key={block.id}
+                                  className={cn(
+                                    'flex items-center gap-1 text-xs px-2 py-1 rounded-full',
+                                    block.status === 'completed'
+                                      ? 'bg-success/10 text-success'
+                                      : block.status === 'pending'
+                                      ? 'bg-primary/10 text-primary'
+                                      : 'bg-muted text-muted-foreground'
+                                  )}
+                                >
+                                  {getBlockTypeIcon(block.type)}
+                                  {block.duration}min
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
                         <Button
                           size="sm"
                           variant="outline"
@@ -225,10 +290,61 @@ export function SubjectDetailModal({
                           <Check className="h-4 w-4 mr-1" />
                           Concluir
                         </Button>
+<<<<<<< HEAD
                       )}
                     </div>
                   );
                 })}
+=======
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Completed Topics */}
+            {completedTopics.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-success" />
+                  Tópicos Concluídos ({completedTopics.length})
+                </h3>
+                <div className="space-y-2">
+                  {completedTopics.map((topic) => (
+                    <div
+                      key={topic.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-success/5 border border-success/20"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center">
+                          <Check className="h-4 w-4 text-success" />
+                        </div>
+                        <div>
+                          <span className="font-medium text-foreground line-through opacity-70">
+                            {topic.name}
+                          </span>
+                          {topic.lastStudied && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Estudado em {new Date(topic.lastStudied).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <DifficultyBadge difficulty={topic.difficulty} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {subject.topics.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>Nenhum tópico cadastrado</p>
+                <p className="text-sm">Adicione tópicos para esta matéria no editor de edital</p>
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
               </div>
             )}
           </div>

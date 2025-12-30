@@ -45,7 +45,10 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
+<<<<<<< HEAD
     "firebase": "^12.7.0",
+=======
+>>>>>>> ef14edd1eb61a1c702fa64eab9c25ee80334f6ad
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
