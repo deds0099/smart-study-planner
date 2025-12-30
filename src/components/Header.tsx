@@ -1,13 +1,14 @@
-import { Bell, Calendar, Settings } from 'lucide-react';
+import { Bell, Calendar, Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface HeaderProps {
   alertCount: number;
   onAlertsClick: () => void;
+  onAddTopicsClick: () => void;
 }
 
-export function Header({ alertCount, onAlertsClick }: HeaderProps) {
+export function Header({ alertCount, onAlertsClick, onAddTopicsClick }: HeaderProps) {
   const today = new Date();
   const formattedDate = today.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -30,6 +31,23 @@ export function Header({ alertCount, onAlertsClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden sm:flex gap-2"
+              onClick={onAddTopicsClick}
+            >
+              <Plus className="h-4 w-4" />
+              Editar Edital
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="sm:hidden"
+              onClick={onAddTopicsClick}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
             <Button variant="ghost" size="icon" className="relative" onClick={onAlertsClick}>
               <Bell className="h-5 w-5" />
               {alertCount > 0 && (
