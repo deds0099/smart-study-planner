@@ -12,6 +12,8 @@ interface AddTopicsModalProps {
   isOpen: boolean;
   onClose: () => void;
   subjects: Subject[];
+  studyDays: number[];
+  onStudyDaysChange: (days: number[]) => void;
   onAddSubject: (subject: Omit<Subject, 'id' | 'topics'>) => void;
   onAddTopic: (subjectId: string, topic: Omit<Topic, 'id' | 'subjectId' | 'completed'>) => void;
   onRemoveTopic: (subjectId: string, topicId: string) => void;
@@ -28,10 +30,22 @@ const subjectColors = [
   'hsl(199 89% 48%)',
 ];
 
+const weekDays = [
+  { id: 0, name: 'Domingo', short: 'Dom' },
+  { id: 1, name: 'Segunda', short: 'Seg' },
+  { id: 2, name: 'Terça', short: 'Ter' },
+  { id: 3, name: 'Quarta', short: 'Qua' },
+  { id: 4, name: 'Quinta', short: 'Qui' },
+  { id: 5, name: 'Sexta', short: 'Sex' },
+  { id: 6, name: 'Sábado', short: 'Sáb' },
+];
+
 export function AddTopicsModal({
   isOpen,
   onClose,
   subjects,
+  studyDays,
+  onStudyDaysChange,
   onAddSubject,
   onAddTopic,
   onRemoveTopic,
@@ -43,7 +57,7 @@ export function AddTopicsModal({
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [newTopicName, setNewTopicName] = useState('');
   const [newTopicDifficulty, setNewTopicDifficulty] = useState<Difficulty>('medium');
-  const [activeTab, setActiveTab] = useState<'subjects' | 'topics'>('subjects');
+  const [activeTab, setActiveTab] = useState<'days' | 'subjects' | 'topics'>('days');
 
   if (!isOpen) return null;
 
@@ -68,6 +82,14 @@ export function AddTopicsModal({
     setNewTopicName('');
   };
 
+  const toggleDay = (dayId: number) => {
+    if (studyDays.includes(dayId)) {
+      onStudyDaysChange(studyDays.filter((d) => d !== dayId));
+    } else {
+      onStudyDaysChange([...studyDays, dayId].sort((a, b) => a - b));
+    }
+  };
+
   const totalTopics = subjects.reduce((acc, s) => acc + s.topics.length, 0);
 
   return (
@@ -86,7 +108,7 @@ export function AddTopicsModal({
               <div>
                 <h2 className="text-xl font-bold text-foreground">Configurar Edital</h2>
                 <p className="text-sm text-muted-foreground">
-                  {subjects.length} matérias • {totalTopics} tópicos
+                  {subjects.length} matérias • {totalTopics} tópicos • {studyDays.length} dias/semana
                 </p>
               </div>
             </div>
@@ -100,13 +122,24 @@ export function AddTopicsModal({
             <button
               className={cn(
                 'flex-1 py-3 text-sm font-medium transition-colors',
+                activeTab === 'days'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setActiveTab('days')}
+            >
+              1. Dias de Estudo
+            </button>
+            <button
+              className={cn(
+                'flex-1 py-3 text-sm font-medium transition-colors',
                 activeTab === 'subjects'
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
               onClick={() => setActiveTab('subjects')}
             >
-              1. Matérias
+              2. Matérias
             </button>
             <button
               className={cn(
@@ -117,12 +150,78 @@ export function AddTopicsModal({
               )}
               onClick={() => setActiveTab('topics')}
             >
-              2. Tópicos
+              3. Tópicos
             </button>
           </div>
 
           {/* Content */}
           <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            {activeTab === 'days' && (
+              <div className="space-y-6">
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">Quais dias você pode estudar?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Selecione os dias da semana disponíveis para criar seu cronograma
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-7 gap-2">
+                  {weekDays.map((day) => {
+                    const isSelected = studyDays.includes(day.id);
+                    return (
+                      <button
+                        key={day.id}
+                        onClick={() => toggleDay(day.id)}
+                        className={cn(
+                          'flex flex-col items-center p-3 rounded-xl transition-all duration-200',
+                          isSelected
+                            ? 'gradient-primary text-primary-foreground shadow-glow'
+                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                        )}
+                      >
+                        <span className="text-xs font-medium">{day.short}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="p-4 rounded-lg bg-secondary/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Dias selecionados:</span>
+                    <span className="font-semibold text-foreground">{studyDays.length} dias/semana</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Tempo estimado de estudo:</span>
+                    <span className="font-semibold text-foreground">{studyDays.length * 2}h-{studyDays.length * 3}h/semana</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => onStudyDaysChange([1, 2, 3, 4, 5])}
+                  >
+                    Seg a Sex
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => onStudyDaysChange([0, 1, 2, 3, 4, 5, 6])}
+                  >
+                    Todos os dias
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => onStudyDaysChange([1, 3, 5])}
+                  >
+                    Alternados
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'subjects' && (
               <>
                 {/* Add Subject Form */}
@@ -311,13 +410,13 @@ export function AddTopicsModal({
           <div className="p-6 border-t border-border bg-secondary/30">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {totalTopics > 0
-                  ? `${totalTopics} tópicos prontos para o cronograma`
-                  : 'Adicione tópicos para gerar o cronograma'}
+                {totalTopics > 0 && studyDays.length > 0
+                  ? `${totalTopics} tópicos em ${studyDays.length} dias/semana`
+                  : 'Configure os dias e adicione tópicos'}
               </p>
               <Button
                 className="gradient-primary text-primary-foreground shadow-glow"
-                disabled={totalTopics === 0}
+                disabled={totalTopics === 0 || studyDays.length === 0}
                 onClick={onGenerateSchedule}
               >
                 Gerar Cronograma Inteligente
