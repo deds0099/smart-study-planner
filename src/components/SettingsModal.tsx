@@ -1,4 +1,4 @@
-import { X, Clock, BookOpen, Bell, Moon, Sun } from 'lucide-react';
+import { X, Clock, BookOpen, Bell, Moon, Sun, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -13,12 +13,14 @@ interface SettingsModalProps {
     blockDuration: number;
     notificationsEnabled: boolean;
     darkMode: boolean;
+    subjectsPerDay?: number;
   };
   onSettingsChange: (settings: {
     blocksPerDay: number;
     blockDuration: number;
     notificationsEnabled: boolean;
     darkMode: boolean;
+    subjectsPerDay?: number;
   }) => void;
 }
 
@@ -70,6 +72,35 @@ export function SettingsModal({ isOpen, onClose, settings, onSettingsChange }: S
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border border-border z-[100]">
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="4">4</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="6">6</SelectItem>
+                    <SelectItem value="8">8</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-500/10">
+                    <Layers className="h-4 w-4 text-orange-500" />
+                  </div>
+                  <div>
+                    <Label className="text-foreground">Matérias por dia</Label>
+                    <p className="text-xs text-muted-foreground">Máximo de matérias diferentes</p>
+                  </div>
+                </div>
+                <Select
+                  value={(settings.subjectsPerDay || 2).toString()}
+                  onValueChange={(v) => updateSetting('subjectsPerDay', parseInt(v))}
+                >
+                  <SelectTrigger className="w-20 bg-card">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-[100]">
+                    <SelectItem value="1">1</SelectItem>
                     <SelectItem value="2">2</SelectItem>
                     <SelectItem value="3">3</SelectItem>
                     <SelectItem value="4">4</SelectItem>

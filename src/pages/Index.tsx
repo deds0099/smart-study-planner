@@ -118,53 +118,80 @@ const Index = () => {
     // Ordenar por peso (matérias mais importantes primeiro)
     const sortedSubjects = [...subjects].sort((a, b) => b.weight - a.weight);
 
-    let blockIndex = 0;
+    // Selecionar apenas o número de matérias configurado por dia
+    const subjectsPerDay = settings.subjectsPerDay || subjects.length;
+    const selectedSubjects = sortedSubjects.slice(0, subjectsPerDay);
 
-    // Criar blocos para cada tópico
-    sortedSubjects.forEach((subject) => {
-      subject.topics.forEach((topic) => {
-        // Calcular o dia baseado nos dias de estudo disponíveis
-        const dayOffset = Math.floor(blockIndex / settings.blocksPerDay);
-        let actualDayOffset = 0;
-        let studyDaysCount = 0;
+    // Se temos menos matérias do que o limite, usamos todas disponíveis
+    const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : sortedSubjects;
 
-        while (studyDaysCount <= dayOffset) {
-          const dayOfWeek = (today.getDay() + actualDayOffset) % 7;
-          if (studyDays.includes(dayOfWeek)) {
-            studyDaysCount++;
-          }
-          if (studyDaysCount <= dayOffset) {
-            actualDayOffset++;
-          }
+    // Gerar blocos usando Round Robin entre as matérias selecionadas
+    // mas ainda respeitando a ordem de tópicos de cada matéria
+
+    // Mapa para controlar o índice do tópico atual de cada matéria
+    const subjectTopicIndices: Record<string, number> = {};
+    subjectsToUse.forEach(s => subjectTopicIndices[s.id] = 0);
+
+    // Calcular quantos blocos precisamos gerar no total (um pouco mais para garantir)
+    const weeksToGenerate = 4; // Gerar 4 semanas de conteúdo
+    const totalBlocksNeeded = settings.blocksPerDay * 7 * weeksToGenerate;
+
+    for (let i = 0; i < totalBlocksNeeded; i++) {
+      const subjectIndex = i % subjectsToUse.length;
+      const subject = subjectsToUse[subjectIndex];
+
+      // Pega o próximo tópico desta matéria
+      const topicIndex = subjectTopicIndices[subject.id];
+
+      // Se já usamos todos os tópicos desta matéria, voltamos ao início (revisão) ou paramos
+      // Aqui vamos simplificar e parar de gerar blocos para esta matéria se acabarem os tópicos
+      if (topicIndex >= subject.topics.length) {
+        continue;
+        // Nota: Em uma implementação mais avançada, poderíamos reiniciar para revisão
+      }
+
+      const topic = subject.topics[topicIndex];
+      subjectTopicIndices[subject.id]++; // Avança para o próximo tópico desta matéria
+
+      // Calcular o dia baseado nos dias de estudo disponíveis
+      const dayOffset = Math.floor(i / settings.blocksPerDay);
+      let actualDayOffset = 0;
+      let studyDaysCount = 0;
+
+      while (studyDaysCount <= dayOffset) {
+        const dayOfWeek = (today.getDay() + actualDayOffset) % 7;
+        if (studyDays.includes(dayOfWeek)) {
+          studyDaysCount++;
         }
+        if (studyDaysCount <= dayOffset) {
+          actualDayOffset++;
+        }
+      }
 
-        const scheduledDate = new Date(today);
-        scheduledDate.setDate(today.getDate() + actualDayOffset);
+      const scheduledDate = new Date(today);
+      scheduledDate.setDate(today.getDate() + actualDayOffset);
 
-        // Determinar tipo de estudo
-        const studyTypes: Array<'theory' | 'questions' | 'revision'> = ['theory', 'questions'];
-        const type = studyTypes[blockIndex % 2];
+      // Determinar tipo de estudo
+      const studyTypes: Array<'theory' | 'questions' | 'revision'> = ['theory', 'questions'];
+      const type = studyTypes[i % 2];
 
-        // Duração baseada na dificuldade
-        const durationMap: Record<Difficulty, number> = {
-          easy: Math.max(30, settings.blockDuration - 10),
-          medium: settings.blockDuration,
-          hard: settings.blockDuration + 10,
-        };
+      // Duração baseada na dificuldade
+      const durationMap: Record<Difficulty, number> = {
+        easy: Math.max(30, settings.blockDuration - 10),
+        medium: settings.blockDuration,
+        hard: settings.blockDuration + 10,
+      };
 
-        newBlocks.push({
-          id: `block_${Date.now()}_${blockIndex}_${topic.id}`,
-          subjectId: subject.id,
-          topicId: topic.id,
-          duration: durationMap[topic.difficulty],
-          type,
-          status: 'pending',
-          scheduledFor: scheduledDate,
-        });
-
-        blockIndex++;
+      newBlocks.push({
+        id: `block_${Date.now()}_${i}_${topic.id}`,
+        subjectId: subject.id,
+        topicId: topic.id,
+        duration: durationMap[topic.difficulty],
+        type,
+        status: 'pending',
+        scheduledFor: scheduledDate,
       });
-    });
+    }
 
     // Pegar apenas os blocos para hoje
     const todayStr = today.toDateString();
@@ -190,7 +217,7 @@ const Index = () => {
       if (subject) {
         await updateSubject(block.subjectId, {
           topics: subject.topics.map((t) =>
-            t.id === block.topicId ? { ...t, lastStudied: new Date() } : t
+            t.id === block.topicId ? { ...t, completed: true, lastStudied: new Date() } : t
           ),
         });
       }
@@ -278,7 +305,13 @@ const Index = () => {
               onFailedToday={handleFailedToday}
             />
 
-            <WeeklyView />
+            <WeeklyView
+              blocks={blocks}
+              subjects={subjects}
+              studyDays={studyDays}
+              onComplete={handleCompleteBlock}
+              onSkip={handleSkipBlock}
+            />
 
             <SubjectProgress subjects={subjects} onSubjectClick={handleSubjectClick} />
           </>

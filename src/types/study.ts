@@ -43,6 +43,14 @@ export interface WeekSchedule {
   summary: WeekSummary;
 }
 
+export interface Settings {
+  blocksPerDay: number;
+  blockDuration: number;
+  notificationsEnabled: boolean;
+  darkMode: boolean;
+  subjectsPerDay?: number;
+}
+
 export interface WeekSummary {
   totalBlocks: number;
   completedBlocks: number;

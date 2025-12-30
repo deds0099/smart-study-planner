@@ -34,6 +34,7 @@ export function useFirestore() {
         blockDuration: 45,
         notificationsEnabled: true,
         darkMode: false,
+        subjectsPerDay: 2,
     });
     const [loading, setLoading] = useState(true);
 
